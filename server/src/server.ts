@@ -1,5 +1,7 @@
 import log from "./log";
 import { initialize } from "./methods/initialize";
+import { completion } from "./methods/textDocument/completion";
+import { didChange } from "./methods/textDocument/didChange";
 
 interface Message {
 	jsonrpc: string;
@@ -11,13 +13,20 @@ export interface RequestMessage extends Message {
 	params?: unknown[] | object;
 }
 
-// interface NotificationMessage extends Message {
-// 	method: string;
-// 	params?: unknown[] | object;
-// }
+export interface NotificationMessage extends Message {
+	method: string;
+	params?: unknown[] | object;
+}
 
-type RequestMethod = (message: RequestMessage) => unknown;
-const methodLookup: Record<string, RequestMethod> = { initialize };
+type NotificationMethod = (message: NotificationMessage) => void;
+
+type RequestMethod = (message: RequestMessage) => ReturnType<typeof initialize> | ReturnType<typeof completion>;
+
+const methodLookup: Record<string, RequestMethod | NotificationMethod> = { 
+    initialize,
+    'textDocument/didChange': didChange,
+    'textDocument/completion': completion,
+ };
 
 const respond = (id: RequestMessage["id"], result: unknown) => {    
     const message = JSON.stringify({id, result});
@@ -56,7 +65,11 @@ process.stdin.on("data", (chunk) => {
 
         const method = methodLookup[message.method];
         if(method) {
-            respond(message.id, method(message));
+            const result = method(message);
+            
+            if(result !== undefined) {
+                respond(message.id, result);
+            }
         }
     }
 });
