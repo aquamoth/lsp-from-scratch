@@ -1,10 +1,12 @@
 import { readFileSync } from "fs";
+import * as path from "path";
 import { TextDocumentIdentifier, documents } from "../../documents";
 import log from "../../log";
 import { RequestMessage } from "../../server";
 
 
-const words = readFileSync("/Users/mattias/source/tests/lsp-from-scratch/tmp/words_alpha.txt", "utf8").split("\n");
+const wordsPath = path.join(__dirname, "../../../../tmp/words_alpha.txt");
+const words = readFileSync(wordsPath, "utf8").split("\n");
 log.write({words: words.length})
 
 
